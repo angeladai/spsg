@@ -15,12 +15,12 @@ Please compile the extension modules by running the `install_utils.sh` script.
 
 ### Training:  
 * See `python train.py --help` for all train options. 
-* Example command: `python train.py --gpu 0 --data_path ./data/completion_blocks --frame_info_path ./data/completion_block_frames --train_file_list ../filelists/train_list.txt --val_file_list ../filelists/val_list.txt --save_epoch 1 --save logs/mp --max_epoch 5`
+* Example command: `python train.py --gpu 0 --data_path ./data/data-geo-color --frame_info_path ./data/data-frames --train_file_list ../filelists/train_list.txt --val_file_list ../filelists/val_list.txt --save_epoch 1 --save logs/mp --max_epoch 5`
 * Trained model: [spsg.pth](http://kaldir.vc.in.tum.de/adai/SPSG/spsg.pth) (7.5M)
 
 ### Testing
 * See `python test_scene_as_chunks.py --help` for all test options. 
-* Example command: `python test_scene_as_chunks.py --gpu 0 --input_data_path ./data/mp_sdf_vox_2cm_input --target_data_path ./data/mp_sdf_vox_2cm_target --test_file_list ../filelists/mp-rooms_val-scenes.txt --model_path spsg.pth --output ./output --max_to_vis 20`
+* Example command: `python test_scene_as_chunks.py --gpu 0 --input_data_path ./data/mp_sdf_2cm_input --target_data_path ./data/mp_sdf_2cm_target --test_file_list ../filelists/mp-rooms_val-scenes.txt --model_path spsg.pth --output ./output --max_to_vis 20`
 
 ### Data:
 * Scene data: 
