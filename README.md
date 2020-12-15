@@ -12,7 +12,6 @@ Training is implemented with [PyTorch](https://pytorch.org/). This code was deve
 
 Please compile the extension modules by running the `install_utils.sh` script.
 
-## TODO HERE ANGIE
 
 ### Training:  
 * See `python train.py --help` for all train options. 
