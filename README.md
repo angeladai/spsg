@@ -34,10 +34,10 @@ Please compile the extension modules by running the `install_utils.sh` script.
 ## Citation:  
 If you find our work useful in your research, please consider citing:
 ```
-@article{dai2020spsg,
- title={SPSG: Self-Supervised Photometric Scene Generation from RGB-D Scans},
- author = {Dai, Angela and Siddiqui, Yawar and Thies, Justus and Valentin, Julien and Nie{\ss}ner, Matthias},
- journal = {arXiv},
- year = {2020}
+@inproceedings{dai2021spsg,
+    title={SPSG: Self-Supervised Photometric Scene Generation from RGB-D Scans},
+    author={Dai, Angela and Siddiqui, Yawar and Thies, Justus and Valentin, Julien and Nie{\ss}ner, Matthias},
+	booktitle={Proc. Computer Vision and Pattern Recognition (CVPR), IEEE},
+	year={2021}
 }
 ```
