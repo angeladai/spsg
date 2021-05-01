@@ -5,25 +5,25 @@
 // CUDA forward declarations
 
 void bilateral_filter_floatmap_cuda(
-    at::Tensor output,
-    at::Tensor input,
+    torch::Tensor output,
+    torch::Tensor input,
 	float sigmaD,
 	float sigmaR);
 
 void median_fill_depthmap_cuda(
-    at::Tensor output,
-    at::Tensor input);
+    torch::Tensor output,
+    torch::Tensor input);
 
 void convert_depth_to_cameraspace_cuda(
-    at::Tensor output,
-    at::Tensor input,
-	at::Tensor intrinsics,
+    torch::Tensor output,
+    torch::Tensor input,
+    torch::Tensor intrinsics,
 	float depthMin,
 	float depthMax);
 
 void compute_normals_cuda(
-    at::Tensor output,
-    at::Tensor input);
+    torch::Tensor output,
+    torch::Tensor input);
 
 // C++ interface
 
@@ -33,8 +33,8 @@ void compute_normals_cuda(
 #define CHECK_INPUT(x) CHECK_CUDA(x); CHECK_CONTIGUOUS(x)
 
 void bilateral_filter_floatmap(
-    at::Tensor output,
-    at::Tensor input,
+    torch::Tensor output,
+    torch::Tensor input,
 	float sigmaD,
 	float sigmaR) {
   CHECK_INPUT(output);
@@ -44,8 +44,8 @@ void bilateral_filter_floatmap(
 }
 
 void median_fill_depthmap(
-    at::Tensor output,
-    at::Tensor input) {
+    torch::Tensor output,
+    torch::Tensor input) {
   CHECK_INPUT(output);
   CHECK_INPUT(input);
 
@@ -54,9 +54,9 @@ void median_fill_depthmap(
 
 // input: batch x 1 x height x width x 3 (campos)
 void convert_depth_to_cameraspace(
-    at::Tensor output,
-    at::Tensor input,
-	at::Tensor intrinsics,
+    torch::Tensor output,
+    torch::Tensor input,
+    torch::Tensor intrinsics,
 	float depthMin,
 	float depthMax) {
   CHECK_INPUT(output);
@@ -68,8 +68,8 @@ void convert_depth_to_cameraspace(
 
 // input: batch x 1 x height x width x 3 (campos)
 void compute_normals(
-    at::Tensor output,
-    at::Tensor input) {
+    torch::Tensor output,
+    torch::Tensor input) {
   CHECK_INPUT(output);
   CHECK_INPUT(input);
 

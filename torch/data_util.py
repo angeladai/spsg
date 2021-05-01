@@ -1,7 +1,7 @@
 from __future__ import print_function
 
 import os, sys, struct
-from scipy import misc
+import imageio
 import numpy as np
 import torch
 import random
@@ -733,13 +733,13 @@ def load_frame(depth_file, color_file, camera_file, depth_image_dims, color_imag
     color_image = None
     orig_dims = None
     if load_depth:
-        depth_image = misc.imread(depth_file)
+        depth_image = imageio.imread(depth_file)
         orig_dims = [depth_image.shape[1], depth_image.shape[0]]
         depth_image = resize_crop_image(depth_image, depth_image_dims)
         depth_image = depth_image.astype(np.float32) / 1000.0
         depth_image = torch.from_numpy(depth_image)
     if load_color:
-        color_image = misc.imread(color_file)
+        color_image = imageio.imread(color_file)
         orig_dims = [color_image.shape[1], color_image.shape[0]]
         color_image = resize_crop_image(color_image, color_image_dims)
         color_image = np.transpose(color_image, [2, 0, 1])  # move feature to front

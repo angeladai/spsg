@@ -80,7 +80,7 @@ def test(dataloader, output_vis, num_to_vis):
     num_vis = 0
     num_batches = len(dataloader)
     with torch.no_grad():
-        for t, sample in enumerate(dataloader):
+        for t, sample in enumerate(dataloader):            
             inputs = sample['input']
             mask = sample['mask']
             max_input_dim = np.array(inputs.shape[2:])
@@ -151,7 +151,7 @@ def main():
         test_files = test_files[:args.max_to_process]
     else:
         args.max_to_process = len(test_files)
-    random.seed(40)
+    random.seed(42)
     random.shuffle(test_files)
     print('#test files = ', len(test_files))
     test_dataset = scene_dataloader.SceneDataset(test_files, args.input_dim, args.truncation, True, args.augment_rgb_scaling, (args.augment_scale_min, args.augment_scale_max), args.color_truncation, args.color_space, target_path=args.target_data_path, max_input_height=args.max_input_height)
@@ -161,7 +161,7 @@ def main():
         if args.vis_only:
             print('warning: output dir %s exists, will overwrite any existing files')
         else:
-            raw_input('warning: output dir %s exists, press key to delete and continue' % args.output)
+            input('warning: output dir %s exists, press key to delete and continue' % args.output)
             shutil.rmtree(args.output)
     if not os.path.exists(args.output):
         os.makedirs(args.output)

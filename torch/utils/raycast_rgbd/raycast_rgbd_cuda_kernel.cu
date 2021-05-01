@@ -1,4 +1,4 @@
-#include <ATen/ATen.h>
+#include <torch/extension.h>
 
 #include <cuda.h>
 #include <cuda_runtime.h>
@@ -256,6 +256,53 @@ __global__ void raycast_rgbd_cuda_kernel(
 	}
 }
 
+
+__device__
+void traverseOccGrid(const uint8_t* occ3d, uint8_t* occ2d, const float3& worldCamPos, const float3& worldDir, const float3& camDir, const int3& dTid, const RayCastParams& params, int dimz, int dimy, int dimx)
+{
+	const float depthToRayLength = 1.0f/camDir.z; // scale factor to convert from depth to ray length
+	float rayCurrent = depthToRayLength * params.depthMin;	// Convert depth to raylength
+	float rayEnd = depthToRayLength * params.depthMax;		// Convert depth to raylength
+#pragma unroll 1
+	while(rayCurrent < rayEnd) {
+		float3 currentPosWorld = worldCamPos+rayCurrent*worldDir;
+		int3 pos = make_int3(currentPosWorld+make_float3(sign(currentPosWorld))*0.5f);
+		if (pos.x >= 0 && pos.y >= 0 && pos.z >= 0 && pos.x < dimx && pos.y < dimy && pos.z < dimz) {
+			if (occ3d[dTid.z*dimz*dimy*dimx + pos.z*dimy*dimx + pos.y*dimx + pos.x] != 0) {
+				occ2d[dTid.z*params.width*params.height + dTid.y*params.width+dTid.x] = 1;
+				return;
+			}
+		}
+		rayCurrent += params.rayIncrement;
+	}
+}
+
+__global__ void raycast_occ_cuda_kernel(
+    const uint8_t* __restrict__ occ3d,
+    uint8_t* __restrict__ occ2d,
+    const float* __restrict__ viewMatrixInv,
+    const RayCastParams params,
+	int dimz, 
+	int dimy, 
+	int dimx) {
+	const unsigned int x = blockIdx.x*blockDim.x + threadIdx.x;
+	const unsigned int y = blockIdx.y*blockDim.y + threadIdx.y;
+	const int batch = blockIdx.z;
+
+	if (x < params.width && y < params.height /*&& batch < params.batch_size*/) {
+		// init
+		occ2d[batch*params.width*params.height + y*params.width + x] = 0;
+
+		const float4x4 curViewMatrixInv = *(float4x4*)(viewMatrixInv + batch*16);
+		float3 camDir = normalize(kinectProjToCamera(params.depthMin, params.depthMax, params.getMx(batch), params.getMy(batch), params.getFx(batch), params.getFy(batch), x, y, 1.0f));
+		float3 worldCamPos = curViewMatrixInv * make_float3(0.0f, 0.0f, 0.0f);
+		float4 w = curViewMatrixInv * make_float4(camDir, 0.0f);
+		float3 worldDir = normalize(make_float3(w.x, w.y, w.z));
+
+		traverseOccGrid(occ3d, occ2d, worldCamPos, worldDir, camDir, make_int3(x,y,batch), params, dimz, dimy, dimx);
+	}
+}
+
 __global__ void construct_dense_sparse_mapping_kernel(
 	const long* __restrict__ locs,
 	int* __restrict__ sparse_mapping,
@@ -330,19 +377,19 @@ __global__ void raycast_rgbd_cuda_backward_kernel(
 } // namespace
 
 void raycast_rgbd_cuda_forward(
-    at::Tensor sparse_mapping,
-    at::Tensor locs,
-	at::Tensor vals_sdf,
-	at::Tensor vals_color,
-	at::Tensor vals_normal,
-    at::Tensor viewMatrixInv, // batched
-    at::Tensor imageColor,
-    at::Tensor imageDepth,
-    at::Tensor imageNormal,
-	at::Tensor mapping3dto2d,
-	at::Tensor mapping3dto2d_num,
-    at::Tensor intrinsicParams, // batched bx4 (fx,fy,mx,my)
-    at::Tensor opts) { //depthmin,depthmax,threshSampleDist,rayIncrement
+    torch::Tensor sparse_mapping,
+    torch::Tensor locs,
+	torch::Tensor vals_sdf,
+	torch::Tensor vals_color,
+	torch::Tensor vals_normal,
+    torch::Tensor viewMatrixInv, // batched
+    torch::Tensor imageColor,
+    torch::Tensor imageDepth,
+    torch::Tensor imageNormal,
+	torch::Tensor mapping3dto2d,
+	torch::Tensor mapping3dto2d_num,
+    torch::Tensor intrinsicParams, // batched bx4 (fx,fy,mx,my)
+    torch::Tensor opts) { //depthmin,depthmax,threshSampleDist,rayIncrement
 
 	auto opts_accessor = opts.accessor<float,1>();
 	RayCastParams params;
@@ -406,8 +453,8 @@ void raycast_rgbd_cuda_forward(
 
 
 void construct_dense_sparse_mapping_cuda(
-    at::Tensor locs,
-    at::Tensor sparse_mapping) {
+    torch::Tensor locs,
+    torch::Tensor sparse_mapping) {
 	int num = (int)locs.size(0);
 	int batch_size = sparse_mapping.size(0);
 	int dimz = sparse_mapping.size(1);
@@ -435,16 +482,16 @@ void construct_dense_sparse_mapping_cuda(
 }
 
 void raycast_rgbd_cuda_backward(
-    at::Tensor grad_color,
-    at::Tensor grad_depth,
-	at::Tensor grad_normal,
-    at::Tensor sparse_mapping,
-    at::Tensor mapping3dto2d,
-	at::Tensor mapping3dto2d_num,
-	at::Tensor dims,
-	at::Tensor d_color,
-	at::Tensor d_depth,
-	at::Tensor d_normals) {
+    torch::Tensor grad_color,
+    torch::Tensor grad_depth,
+	torch::Tensor grad_normal,
+    torch::Tensor sparse_mapping,
+    torch::Tensor mapping3dto2d,
+	torch::Tensor mapping3dto2d_num,
+	torch::Tensor dims,
+	torch::Tensor d_color,
+	torch::Tensor d_depth,
+	torch::Tensor d_normals) {
 	auto dims_accessor = dims.accessor<int,1>();
 	const int image_height = grad_color.size(1);
 	const int image_width = grad_color.size(2);
@@ -482,3 +529,39 @@ void raycast_rgbd_cuda_backward(
 #endif
 }
 
+
+void raycast_occ_cuda_forward(
+    at::Tensor occ3d,
+    at::Tensor occ2d,
+    at::Tensor viewMatrixInv, // batched
+    at::Tensor intrinsicParams, // batched bx4 (fx,fy,mx,my)
+    at::Tensor opts) { //depthmin,depthmax,rayIncrement
+
+	auto opts_accessor = opts.accessor<float,1>();
+	RayCastParams params;
+	params.width = (int)(opts_accessor[0]+0.5f);
+	params.height = (int)(opts_accessor[1]+0.5f);
+	params.depthMin = opts_accessor[2];
+	params.depthMax = opts_accessor[3];
+	params.rayIncrement = opts_accessor[4];
+	params.intrinsicsParams = intrinsicParams.data<float>();
+
+	const int batch_size = occ3d.size(0);
+	const int dimz = occ3d.size(2);
+	const int dimy = occ3d.size(3);
+	const int dimx = occ3d.size(4);
+	const dim3 gridSize((params.width + T_PER_BLOCK - 1)/T_PER_BLOCK, (params.height + T_PER_BLOCK - 1)/T_PER_BLOCK, batch_size);
+	const dim3 blockSize(T_PER_BLOCK, T_PER_BLOCK);
+    raycast_occ_cuda_kernel<<<gridSize, blockSize>>>(
+        occ3d.data<uint8_t>(),
+        occ2d.data<uint8_t>(),
+        viewMatrixInv.data<float>(),
+        params,
+		dimz, 
+		dimy, 
+		dimx);
+#ifdef _DEBUG
+	cutilSafeCall(cudaDeviceSynchronize());
+	cutilCheckMsg(__FUNCTION__);
+#endif
+}

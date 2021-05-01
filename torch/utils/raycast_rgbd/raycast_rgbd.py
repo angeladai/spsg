@@ -64,4 +64,20 @@ class RaycastRGBD(nn.Module):
         return RayCastRGBDFunction.apply(locs, vals_sdf, vals_colors, vals_normals, view_matrix, intrinsic_params, self.dims3d, self.width, self.height, self.depth_min, self.depth_max, self.thresh_sample_dist, self.ray_increment, self.image_color, self.image_depth, self.image_normal, self.sparse_mapping, self.mapping3dto2d, self.mapping3dto2d_num, self.d_color, self.d_depth, self.d_normal)
 
 
+class RaycastOcc(nn.Module):
+    def __init__(self, batch_size, dims3d, width, height, depth_min, depth_max, ray_increment):
+        super(RaycastOcc, self).__init__()
+        self.dims3d = dims3d
+        self.width = width
+        self.height = height
+        self.depth_min = depth_min
+        self.depth_max = depth_max
+        self.ray_increment = ray_increment
+        self.occ2d = torch.zeros(batch_size, 1, height, width, dtype=torch.uint8).cuda()
+
+    def forward(self, occ3d, view_matrix, intrinsic_params):
+        opts = torch.FloatTensor([self.width, self.height, self.depth_min, self.depth_max, self.ray_increment, self.dims3d[2], self.dims3d[1], self.dims3d[0]])      
+        raycast_color_cuda.raycast_occ(occ3d, self.occ2d, view_matrix, intrinsic_params, opts)
+        return self.occ2d
+
 

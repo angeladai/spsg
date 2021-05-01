@@ -4,36 +4,43 @@
 
 // CUDA forward declarations
 
-void raycast_rgbd_cuda_forward( // TODO: dense or sparse here?
-    at::Tensor sparse_mapping,
-    at::Tensor locs,
-	at::Tensor vals_sdf,
-	at::Tensor vals_color,
-	at::Tensor vals_normals,
-    at::Tensor viewMatrixInv,
-    at::Tensor imageColor,
-    at::Tensor imageDepth,
-    at::Tensor imageNormal,
-	at::Tensor mapping2dto3d,
-	at::Tensor mapping3dto2d_num,
-	at::Tensor intrinsicParams,
-    at::Tensor opts);
+void raycast_rgbd_cuda_forward( 
+    torch::Tensor sparse_mapping,
+    torch::Tensor locs,
+	torch::Tensor vals_sdf,
+	torch::Tensor vals_color,
+	torch::Tensor vals_normals,
+    torch::Tensor viewMatrixInv,
+    torch::Tensor imageColor,
+    torch::Tensor imageDepth,
+    torch::Tensor imageNormal,
+	torch::Tensor mapping2dto3d,
+	torch::Tensor mapping3dto2d_num,
+	torch::Tensor intrinsicParams,
+    torch::Tensor opts);
 
 void raycast_rgbd_cuda_backward(
-    at::Tensor grad_color,
-    at::Tensor grad_depth,
-	at::Tensor grad_normal,
-    at::Tensor sparse_mapping,
-    at::Tensor mapping3dto2d,
-	at::Tensor mapping3dto2d_num,
-	at::Tensor dims,
-	at::Tensor d_color,
-	at::Tensor d_depth,
-	at::Tensor d_normals);
+    torch::Tensor grad_color,
+    torch::Tensor grad_depth,
+	torch::Tensor grad_normal,
+    torch::Tensor sparse_mapping,
+    torch::Tensor mapping3dto2d,
+	torch::Tensor mapping3dto2d_num,
+	torch::Tensor dims,
+	torch::Tensor d_color,
+	torch::Tensor d_depth,
+	torch::Tensor d_normals);
+	
+void raycast_occ_cuda_forward(
+    at::Tensor occ3d,
+    at::Tensor occ2d,
+    at::Tensor viewMatrixInv, 
+    at::Tensor intrinsicParams,
+    at::Tensor opts);
 
 void construct_dense_sparse_mapping_cuda(
-    at::Tensor locs,
-    at::Tensor sparse_mapping);
+    torch::Tensor locs,
+    torch::Tensor sparse_mapping);
 
 
 // C++ interface
@@ -44,19 +51,19 @@ void construct_dense_sparse_mapping_cuda(
 #define CHECK_INPUT(x) CHECK_CUDA(x); CHECK_CONTIGUOUS(x)
 
 void raycast_color_forward(
-    at::Tensor sparse_mapping,
-    at::Tensor locs,
-	at::Tensor vals_sdf,
-	at::Tensor vals_color,
-	at::Tensor vals_normals,
-    at::Tensor viewMatrixInv,
-    at::Tensor imageColor,
-    at::Tensor imageDepth,
-    at::Tensor imageNormal,
-	at::Tensor mapping3dto2d,
-	at::Tensor mapping3dto2d_num,
-	at::Tensor intrinsicParams,
-    at::Tensor opts) {
+    torch::Tensor sparse_mapping,
+    torch::Tensor locs,
+	torch::Tensor vals_sdf,
+	torch::Tensor vals_color,
+	torch::Tensor vals_normals,
+    torch::Tensor viewMatrixInv,
+    torch::Tensor imageColor,
+    torch::Tensor imageDepth,
+    torch::Tensor imageNormal,
+	torch::Tensor mapping3dto2d,
+	torch::Tensor mapping3dto2d_num,
+	torch::Tensor intrinsicParams,
+    torch::Tensor opts) {
   CHECK_INPUT(sparse_mapping);
   CHECK_INPUT(locs);
   CHECK_INPUT(vals_sdf);
@@ -74,8 +81,8 @@ void raycast_color_forward(
 }
 
 void construct_dense_sparse_mapping(
-    at::Tensor locs,
-    at::Tensor sparse_mapping) {
+    torch::Tensor locs,
+    torch::Tensor sparse_mapping) {
   CHECK_INPUT(locs);
   CHECK_INPUT(sparse_mapping);
 
@@ -83,16 +90,16 @@ void construct_dense_sparse_mapping(
 }
 
 void raycast_color_backward(
-    at::Tensor grad_color,
-	at::Tensor grad_depth,
-	at::Tensor grad_normal,
-    at::Tensor sparse_mapping,
-    at::Tensor mapping3dto2d,
-	at::Tensor mapping3dto2d_num,
-	at::Tensor dims,
-	at::Tensor d_color,
-	at::Tensor d_depth,
-	at::Tensor d_normals) {
+    torch::Tensor grad_color,
+	torch::Tensor grad_depth,
+	torch::Tensor grad_normal,
+    torch::Tensor sparse_mapping,
+    torch::Tensor mapping3dto2d,
+	torch::Tensor mapping3dto2d_num,
+	torch::Tensor dims,
+	torch::Tensor d_color,
+	torch::Tensor d_depth,
+	torch::Tensor d_normals) {
   CHECK_INPUT(grad_color);
   CHECK_INPUT(grad_depth);
   CHECK_INPUT(grad_normal);
@@ -116,8 +123,22 @@ void raycast_color_backward(
 	  d_normals);
 }
 
+void raycast_occ_forward(
+    at::Tensor occ3d,
+    at::Tensor occ2d,
+    at::Tensor viewMatrixInv, 
+    at::Tensor intrinsicParams,
+    at::Tensor opts) {
+  CHECK_INPUT(occ3d);
+  CHECK_INPUT(occ2d);
+  CHECK_INPUT(viewMatrixInv);
+  CHECK_INPUT(intrinsicParams);
+  return raycast_occ_cuda_forward(occ3d, occ2d, viewMatrixInv, intrinsicParams, opts);
+}
+
 PYBIND11_MODULE(TORCH_EXTENSION_NAME, m) {
   m.def("forward", &raycast_color_forward, "raycast_color forward (CUDA)");
   m.def("backward", &raycast_color_backward, "raycast_color backward (CUDA)");
   m.def("construct_dense_sparse_mapping", &construct_dense_sparse_mapping, "construct mapping from dense to sparse (CUDA)");
+  m.def("raycast_occ", &raycast_occ_forward, "raycast_color 3d occupancy grid (CUDA)");
 }

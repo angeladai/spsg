@@ -16,11 +16,9 @@ import model as model_util
 import loss as loss_util
 import style
 
-#from utils.raycast_rgbd_trilerp.raycast import Raycast as RaycastRGBD
 from utils.raycast_rgbd.raycast_rgbd import RaycastRGBD
-from utils.raycast_rgbd_trilerp.raycast import RaycastOcc
+from utils.raycast_rgbd.raycast_rgbd import RaycastOcc
 from utils.depth_utils.depth_utils import Depth2Normals
-#import utils.color_utils_gpu.color_utils as color_utils
 import utils.color_utils_cpu.color_utils as color_utils
 
 COLOR_MEAN = [0.485, 0.456, 0.406] # for vgg19
@@ -303,7 +301,7 @@ def train(epoch, iter, dataloader, log_file, output_save):
 
     use_disc = args.weight_disc_loss > 0
     num_batches = len(dataloader)
-    for t, sample in enumerate(dataloader):
+    for t, sample in enumerate(dataloader):    
         sdfs = sample['sdf']
         if sdfs is None:
             torch.cuda.empty_cache()
@@ -945,7 +943,7 @@ def main():
     if not os.path.exists(args.save):
         os.makedirs(args.save)
     elif not _OVERFIT:
-        raw_input('warning: save dir %s exists, press key to overwrite and continue' % args.save)
+        input('warning: save dir %s exists, press key to overwrite and continue' % args.save)
     data_util.dump_args_txt(args, os.path.join(args.save, 'args.txt'))
     log_file = open(os.path.join(args.save, 'log.csv'), 'w')
     has_val = len(val_files) > 0

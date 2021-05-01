@@ -93,6 +93,10 @@ def test(dataloader, output_vis, num_to_vis):
                 inputs = inputs[:,:,:args.max_input_height]
                 if mask is not None:
                     mask = mask[:,:,:args.max_input_height]
+                if sdfs is not None:
+                    sdfs = sdfs[:,:,:args.max_input_height]
+                if colors is not None:
+                    colors = colors[:,:args.max_input_height]
             sys.stdout.write('\r[ %d | %d ] %s (%d, %d, %d)    ' % (num_proc, args.max_to_process, sample['name'], max_input_dim[0], max_input_dim[1], max_input_dim[2]))
             
             output_colors = torch.zeros(colors.shape)
@@ -209,7 +213,7 @@ def main():
         test_files = test_files[:args.max_to_process]
     else:
         args.max_to_process = len(test_files)
-    random.seed(40)
+    random.seed(42)
     random.shuffle(test_files)
     print('#test files = ', len(test_files))
     test_dataset = scene_dataloader.SceneDataset(test_files, args.input_dim, args.truncation, True, args.augment_rgb_scaling, (args.augment_scale_min, args.augment_scale_max), args.color_truncation, args.color_space, target_path=args.target_data_path)
@@ -219,7 +223,7 @@ def main():
         if args.vis_only:
             print('warning: output dir %s exists, will overwrite any existing files')
         else:
-            raw_input('warning: output dir %s exists, press key to overwrite and continue' % args.output)
+            input('warning: output dir %s exists, press key to overwrite and continue' % args.output)
             #shutil.rmtree(args.output)
     if not os.path.exists(args.output):
         os.makedirs(args.output)
