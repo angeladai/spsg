@@ -30,6 +30,10 @@ Please compile the extension modules by running the `install_utils.sh` script.
   - [data-geo-color.zip](http://kaldir.vc.in.tum.de/adai/SPSG/data-geo-color.zip) (110G)
   - [data-frames.zip](http://kaldir.vc.in.tum.de/adai/SPSG/data-frames.zip) (11M)
   - [images.zip](http://kaldir.vc.in.tum.de/adai/SPSG/images.zip) (12G)
+* Data generation code: [datagen](datagen)
+  - Developed in Visual Studio 2017
+  - Dependencies: Microsoft DirectX SDF June 2010, [mLib](https://github.com/niessner/mLib)
+  - Downlaod the [Matterport3D](https://github.com/niessner/matterport) dataset and edit the corresponding file paths in [datagen/zParametersScanMP.txt](datagen/zParametersScanMP.txt). Note that the mesh files must have the face attributes removed to generate the `*.reduced.ply` files.
 
 ## Citation:  
 If you find our work useful in your research, please consider citing:
